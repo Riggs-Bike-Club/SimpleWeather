@@ -4,27 +4,27 @@ AddCSLuaFile( )
 -- Create tables for use later
 SW = SW or { }
 
-SW.AutoWeatherTypes = { 
+SW.AutoWeatherTypes = {
 	-- "acidrain" ,
 	-- "blizzard" ,
-	"fog" ,
+	-- "fog" ,
 	-- "hail" ,
 	-- "lightning" ,
 	-- "meteor" ,
 	"overcast" ,
 	"rain" ,
-	"fograin" ,
+	-- "fograin" ,
 	-- "sandstorm" ,
 	-- "smog" ,
-	-- "snow" ,
+	"snow" ,
 	"thunderstorm" ,
-	-- "heavystorm" ,
+	"heavystorm" ,
 }
 
 local IsSinglePlayer = game.SinglePlayer()
 
 -- What maps to not run the skybox functions on
-SW.MapBlacklist = {  
+SW.MapBlacklist = {
 	-- A short list I know of to get you started -V92
 	-- Ideally, keep them alphabetical to preserve your sanity.
 	"act_airport" , -- Indoor
@@ -141,7 +141,7 @@ for _, v in pairs( tab ) do
 	if WEATHER.ConVar then
 		CreateConVar( WEATHER.ConVar[1] , "1" , { FCVAR_ARCHIVE , FCVAR_REPLICATED } , WEATHER.ConVar[2] , 0 , 1 )
 	end
-	
+
 end
 
 ----------------------------------------
@@ -164,7 +164,7 @@ CreateConVar( "sw_func_particle_type" , 0 , { FCVAR_ARCHIVE , FCVAR_REPLICATED }
 -- CreateConVar( "sw_func_waterdarken" , 1 , { FCVAR_ARCHIVE , FCVAR_REPLICATED } , "(BOOL) Should water fog be darkened to match lighting?" , 0 , 1 )
 
 CreateConVar( "sw_hud_toggle", 1 , { FCVAR_ARCHIVE , FCVAR_REPLICATED } , "(BOOL) Admin override for SimpleWeather HUD." , 0 , 1 )
-	
+
 CreateConVar( "sw_autoweather" , 1 , { FCVAR_ARCHIVE , FCVAR_REPLICATED } , "(BOOL) Enable auto-weather starting." , 0 , 1 )
 CreateConVar( "sw_autoweather_minstart" , 1 , { FCVAR_ARCHIVE , FCVAR_REPLICATED } , "(FLOAT) Minimum time in real-world minutes before weather begins." , 0 , 16 )
 CreateConVar( "sw_autoweather_maxstart" , 3 , { FCVAR_ARCHIVE , FCVAR_REPLICATED } , "(FLOAT) Maximum time in real-world minutes before weather begins." , 0 , 16 )
@@ -269,17 +269,17 @@ sound.Add( {
 } )
 
 local function SWAdminMessage( ply, msg )
-	
+
 	if( ply and ply:IsValid() ) then
-		
+
 		ply:PrintMessage( 2, msg )
-		
+
 	else
-		
+
 		MsgN( msg )
-		
+
 	end
-	
+
 end
 
 ------------------------------
@@ -381,7 +381,7 @@ local function SetTime( ply, cmd, args )
 		return
 
 	end
-	
+
 	if( tonumber( args[1] ) and tonumber( args[1] ) >= 0 and tonumber( args[1] ) <= 23 ) then
 
 		SW.SetTime( tonumber( args[1] ) )
@@ -439,7 +439,7 @@ if CLIENT then
 	function SW.NumSliderNet(_parent, label, convar, min, max, type1, ...)
 		local gconvar = assert(GetConVar(convar), "Unknown ConVar: " .. convar .. "!")
 		local newpanel
-	
+
 		if IsSinglePlayer then
 			--newpanel = _parent:NumSlider(label, convar, min, max, type1, ...)
 			newpanel = _parent:AddControl( "slider" , { ["Label"] = label , ["Command"] = convar , ["Min"] = min , ["Max"] = max , ["Type"] = type1 } )
@@ -447,33 +447,33 @@ if CLIENT then
 			--newpanel = _parent:NumSlider(label, nil, min, max, type1, ...)
 			newpanel = _parent:AddControl( "slider" , { ["Label"] = label , ["Command"] = nil , ["Min"] = min , ["Max"] = max , ["Type"] = type1 } )
 		end
-	
+
 		local decimals = 2
 		local sf = "%." .. decimals .. "f"
-	
+
 		if not IsSinglePlayer then
 			local ignore = false
-	
+
 			newpanel.Think = function(_self)
 				if _self._wait_for_update and _self._wait_for_update > RealTime() then return end
 				local float = gconvar:GetFloat()
-	
+
 				if _self:GetValue() ~= float then
 					ignore = true
 					_self:SetValue(float)
 					ignore = false
 				end
 			end
-	
+
 			newpanel.OnValueChanged = function(_self, _newval)
 				if ignore then return end
-	
+
 				if not LocalPlayer():IsAdmin() then return end
 				_self._wait_for_update = RealTime() + 1
-	
+
 				timer.Create("sw_vgui_" .. convar, 0.5, 1, function()
 					if not LocalPlayer():IsAdmin() then return end
-	
+
 					net.Start("SW_SetServerCommand")
 					net.WriteString(convar)
 					net.WriteString(string.format(sf, _newval))
@@ -481,7 +481,7 @@ if CLIENT then
 				end)
 			end
 		end
-	
+
 		return newpanel
 	end
 
@@ -493,7 +493,7 @@ if CLIENT then
 			--newpanel = _parent:CheckBox(label, convar, ...)
 			newpanel = _parent:AddCVar( label, convar, ... )
 		else
-			--newpanel = _parent:CheckBox(label, nil, ...) 
+			--newpanel = _parent:CheckBox(label, nil, ...)
 			newpanel = _parent:AddCVar( label, nil, ... )
 		end
 
@@ -1104,13 +1104,13 @@ if CLIENT then
 
 			SW.CheckBoxNet(Panel, "Toggle Player Damage", "sw_acidrain_dmg_toggle")
 			Panel:ControlHelp( "Toggle acid rain damage to players." , {} )
-			
+
 			SW.CheckBoxNet(Panel, "Toggle NPC Damage", "sw_acidrain_dmg_npc_toggle")
 			Panel:ControlHelp( "Toggle acid rain damage to NPCs." , {} )
-			
+
 			SW.CheckBoxNet(Panel, "Toggle Prop Damage", "sw_acidrain_dmg_prop_toggle")
 			Panel:ControlHelp( "Toggle acid rain damage to props." , {} )
-			
+
 			SW.NumSliderNet(Panel, "Damage Amount", "sw_acidrain_dmg_amount", "1", "100", "int")
 			Panel:ControlHelp( "How much damage per hit the acid rain does." , {} )
 
@@ -1668,7 +1668,7 @@ if CLIENT then
 		rng:AddOption( "Thunderstorm", function( ) RunConsoleCommand( "sw_weather" , "thunderstorm" ) end )
 		rng:AddOption( "Heavy Storm", function( ) RunConsoleCommand( "sw_weather" , "heavystorm" ) end )
 		rng:AddOption( "Lightning", function( ) RunConsoleCommand( "sw_weather" , "lightning" ) end )
-		
+
 		rng:AddSpacer( )
 
 		rng:AddOption( "Snow", function( ) RunConsoleCommand( "sw_weather" , "snow" ) end )
@@ -1705,7 +1705,7 @@ if CLIENT then
 		SW.AddCVarNet( rng, "Thunderstorm", "sw_thunderstorm" , "1" , "0" )
 		SW.AddCVarNet( rng, "Heavy Storm", "sw_heavystorm" , "1" , "0" )
 		SW.AddCVarNet( rng, "Lightning", "sw_lightning" , "1" , "0" )
-		
+
 		rng:AddSpacer( )
 
 		SW.AddCVarNet( rng, "Snow", "sw_snow" , "1" , "0" )
@@ -1825,7 +1825,7 @@ function SW.PostInitMapFixes()
 
 				SW.TextureResets[v] = { m1, m2 };
 			end
-			
+
 			m:SetTexture( "$basetexture", "nature/cliffface001a" );
 			m:SetTexture( "$basetexture2", "nature/cliffface001a" );
 
@@ -1860,7 +1860,7 @@ function SW.PostInitMapFixes()
 
 				-- SW.TextureResets[v] = { m1, m2 };
 			-- end
-			
+
 			-- m:SetTexture( "$basetexture", m2 );
 			-- m:SetTexture( "$basetexture2", m1 );
 
